@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dataset Visualization</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 text-gray-900">
+    <div class="max-w-4xl mx-auto p-6">
+        <h1 class="text-2xl font-bold mb-6">Generate and Visualize Dataset</h1>
+
+        <form id="datasetForm" class="space-y-4">
+            <div class="flex space-x-4">
+                <div class="w-1/3">
+                    <label for="batchSize" class="block text-sm font-medium text-gray-700">Batch Size</label>
+                    <input type="number" id="batchSize" name="batchSize" value="50" min="1"
+                        class="w-full p-2 border border-gray-300 rounded-md" required>
+                </div>
+                <div class="w-1/3">
+                    <label for="ageMin" class="block text-sm font-medium text-gray-700">Age Min</label>
+                    <input type="number" id="ageMin" name="ageMin" value="1" min="1"
+                        class="w-full p-2 border border-gray-300 rounded-md" required>
+                </div>
+                <div class="w-1/3">
+                    <label for="ageMax" class="block text-sm font-medium text-gray-700">Age Max</label>
+                    <input type="number" id="ageMax" name="ageMax" value="10" min="1"
+                        class="w-full p-2 border border-gray-300 rounded-md" required>
+                </div>
+            </div>
+
+            <div class="flex space-x-4">
+                <div class="w-1/3">
+                    <label for="depthMin" class="block text-sm font-medium text-gray-700">Depth Min</label>
+                    <input type="number" id="depthMin" name="depthMin" value="1" min="1"
+                        class="w-full p-2 border border-gray-300 rounded-md" required>
+                </div>
+                <div class="w-1/3">
+                    <label for="depthMax" class="block text-sm font-medium text-gray-700">Depth Max</label>
+                    <input type="number" id="depthMax" name="depthMax" value="5" min="1"
+                        class="w-full p-2 border border-gray-300 rounded-md" required>
+                </div>
+                <div class="w-1/3">
+                    <label for="noiseMin" class="block text-sm font-medium text-gray-700">Noise Min</label>
+                    <input type="number" id="noiseMin" name="noiseMin" value="0" min="0" max="1" step="0.01"
+                        class="w-full p-2 border border-gray-300 rounded-md" required>
+                </div>
+            </div>
+
+            <div class="flex space-x-4">
+                <div class="w-1/3">
+                    <label for="noiseMax" class="block text-sm font-medium text-gray-700">Noise Max</label>
+                    <input type="number" id="noiseMax" name="noiseMax" value="1" min="0" max="1" step="0.01"
+                        class="w-full p-2 border border-gray-300 rounded-md" required>
+                </div>
+                <div class="w-1/3">
+                    <label for="nodeType" class="block text-sm font-medium text-gray-700">Node Type (comma-separated 0
+                        or 1)</label>
+                    <input type="text" id="nodeType" name="nodeType" value="1,0,1,0"
+                        placeholder="Enter as comma-separated values"
+                        class="w-full p-2 border border-gray-300 rounded-md" required>
+                </div>
+            </div>
+
+            <button type="submit" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Generate
+                Dataset</button>
+        </form>
+
+        <h2 class="text-xl font-semibold mt-8">Dataset</h2>
+        <table id="datasetTable" class="w-full mt-4 border-collapse table-auto">
+            <thead>
+                <tr>
+                    <th class="px-4 py-2 border-b text-sm font-medium text-gray-700">Age</th>
+                    <th class="px-4 py-2 border-b text-sm font-medium text-gray-700">Depth</th>
+                    <th class="px-4 py-2 border-b text-sm font-medium text-gray-700">Noise Level</th>
+                    <th class="px-4 py-2 border-b text-sm font-medium text-gray-700">Node Type</th>
+                    <th class="px-4 py-2 border-b text-sm font-medium text-gray-700">Label</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Dataset rows will be populated here -->
+            </tbody>
+        </table>
+
+        <h2 class="text-xl font-semibold mt-8">Plot</h2>
+        <canvas id="datasetPlot" width="600" height="400" class="mt-4"></canvas>
+        <button onclick="plotData()" class="mt-4 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600">
+            Plot
+            Data
+        </button>
+    </div>
+
+    <script>
+        let dataset = [];
+
+        // Function to generate dataset based on form input
+        document.getElementById('datasetForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const batchSize = parseInt(document.getElementById('batchSize').value);
+            const ageMin = parseInt(document.getElementById('ageMin').value);
+            const ageMax = parseInt(document.getElementById('ageMax').value);
+            const depthMin = parseInt(document.getElementById('depthMin').value);
+            const depthMax = parseInt(document.getElementById('depthMax').value);
+            const noiseMin = parseFloat(document.getElementById('noiseMin').value);
+            const noiseMax = parseFloat(document.getElementById('noiseMax').value);
+            const nodeType = document.getElementById('nodeType').value.split(',').map(Number);
+
+            // Generate the dataset using the given input
+            dataset = generateDataset(batchSize, ageMin, ageMax, depthMin, depthMax, noiseMin, noiseMax, nodeType);
+
+            // Populate table with dataset values
+            populateDatasetTable();
+
+        });
+
+        // Function to generate dataset
+        function generateDataset(batchSize, ageMin, ageMax, depthMin, depthMax, noiseMin, noiseMax, nodeType) {
+            const data = [];
+            for (let i = 0; i < batchSize; i++) {
+                const age = Math.floor(Math.random() * (ageMax - ageMin + 1)) + ageMin;
+                const depth = Math.floor(Math.random() * (depthMax - depthMin + 1)) + depthMin;
+                const noiseLevel = parseFloat((Math.random() * (noiseMax - noiseMin) + noiseMin).toFixed(2));
+                const nodeTypeVal = nodeType[Math.floor(Math.random() * nodeType.length)];
+
+                const label = (1 / age) * 0.4 + (1 / depth) * 0.2 + noiseLevel * 0.3 + (nodeTypeVal === 1 ? 0.1 : 0);
+                data.push({ age, depth, noiseLevel, nodeType: nodeTypeVal, label });
+            }
+            return data;
+        }
+
+        // Function to populate the dataset in a table
+        function populateDatasetTable() {
+            const table = document.getElementById('datasetTable').getElementsByTagName('tbody')[0];
+            table.innerHTML = ''; // Clear existing rows
+            dataset.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-4 py-2 border-b">
+                        <input type="number" value="${row.age}" onchange="updateData(${index}, 'age', this.value)" class="w-full p-2 border rounded-md">
+                    </td>
+                    <td class="px-4 py-2 border-b">
+                        <input type="number" value="${row.depth}" onchange="updateData(${index}, 'depth', this.value)" class="w-full p-2 border rounded-md">
+                    </td>
+                    <td class="px-4 py-2 border-b">
+                        <input type="number" step="0.01" value="${row.noiseLevel}" onchange="updateData(${index}, 'noiseLevel', this.value)" class="w-full p-2 border rounded-md">
+                    </td>
+                    <td class="px-4 py-2 border-b">
+                        <input type="number" value="${row.nodeType}" onchange="updateData(${index}, 'nodeType', this.value)" class="w-full p-2 border rounded-md">
+                    </td>
+                    <td class="px-4 py-2 border-b">
+                        <input type="number" step="0.001" value="${row.label}" onchange="updateData(${index}, 'label', this.value)" class="w-full p-2 border rounded-md">
+                    </td>
+                `;
+                table.appendChild(tr);
+            });
+        }
+
+
+        // Function to update data when user edits a field
+        function updateData(index, key, value) {
+            if (key === 'label') {
+                dataset[index][key] = parseFloat(value); // allow direct editing
+            } else {
+                dataset[index][key] = key === 'noiseLevel' ? parseFloat(value) : parseInt(value);
+
+                // Optionally recalculate label when other fields change (if label not manually controlled)
+                dataset[index].label = (1 / dataset[index].age) * 0.4
+                    + (1 / dataset[index].depth) * 0.2
+                    + dataset[index].noiseLevel * 0.3
+                    + (dataset[index].nodeType === 1 ? 0.1 : 0);
+            }
+
+            populateDatasetTable();
+            plotData(); // Keep chart updated
+        }
+
+        // Function to plot the dataset using Chart.js
+        function plotData() {
+            const ctx = document.getElementById('datasetPlot').getContext('2d');
+            if (window.myChart) {
+                window.myChart.destroy();
+            }
+
+            window.myChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Label vs Age',
+                        data: dataset.map(d => ({ x: d.age, y: d.label })),
+                        backgroundColor: 'rgba(59, 130, 246, 0.6)', // Tailwind blue-500
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Age'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Label'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+    </script>
+
+</body>
+
+</html>

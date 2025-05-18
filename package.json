@@ -1,0 +1,30 @@
+{
+  "name": "model_training",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "serve": "nodemon --ignore trained/ src/app.js",
+
+    "typeorm": "typeorm-ts-node-esm",
+    "migration:generate": "typeorm migration:generate -d ./ormconfig.js --outputJs",
+    "migration:run": "typeorm migration:run -d ./ormconfig.js",
+    "migration:revert": "typeorm migration:revert -d ./ormconfig.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@tensorflow/tfjs-node": "^4.22.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "mysql2": "^3.14.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
+    "typeorm": "^0.3.22",
+    "uuid": "^11.1.0"
+  }
+}
